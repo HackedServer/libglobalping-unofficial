@@ -94,12 +94,13 @@ class Probes:
         for probe in probe_list:
             # Misspelling fix pending PR
             # https://github.com/jsdelivr/globalping/pull/249
-            temp_location_fix: dict = probe["location"]
-            temp_location_fix["latitude"] = temp_location_fix.pop("latitute")
-
             probes.append(
                 Probe(
-                    probe["version"], probe["ready"], ProbeLocation(**temp_location_fix)
+                    probe["version"],
+                    probe["ready"],
+                    ProbeLocation(
+                        latitude=probe["location"].pop("latitute"), **probe["location"]
+                    ),
                 )
             )
         return cls(probes)
