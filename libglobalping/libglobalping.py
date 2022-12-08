@@ -20,9 +20,11 @@ class GlobalpingClient:
         super().__init__()
         self.token = token
 
-    @cached_property
     def get_probes(self) -> Probes:
         return Probes.generate()
+
+    def get_all_probes(self) -> list[Probe]:
+        return self.get_probes().all
 
     def has_country(self, country: str) -> bool:
         return self.get_probes().has_country(country)
