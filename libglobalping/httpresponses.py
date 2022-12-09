@@ -1,5 +1,7 @@
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
+
+from libglobalping.common import GlobalpingBaseResponse, ResultProbe
 
 
 @dataclass
@@ -14,35 +16,6 @@ class HTTPTimings:
     @classmethod
     def from_api_response(cls, data: dict[Any, Any]) -> "HTTPTimings":
         return cls(**data)
-
-
-@dataclass
-class HTTPResultProbe:
-    continent: str
-    region: str
-    country: str
-    state: Optional[str]
-    city: str
-    asn: int
-    longitude: float
-    latitude: float
-    network: str
-    resolvers: list[str]
-
-    @classmethod
-    def from_api_response(cls, data: dict[Any, Any]) -> "HTTPResultProbe":
-        return cls(
-            continent=data["continent"],
-            region=data["region"],
-            country=data["country"],
-            state=data.get("state", None),
-            city=data["city"],
-            asn=data["asn"],
-            longitude=data["longitude"],
-            latitude=data["latitude"],
-            network=data["network"],
-            resolvers=data["resolvers"],
-        )
 
 
 @dataclass
@@ -72,25 +45,19 @@ class HTTPResult:
 
 @dataclass
 class HTTPResults:
-    probe: HTTPResultProbe
+    probe: ResultProbe
     result: HTTPResult
 
     @classmethod
     def from_api_response(cls, data: dict[Any, Any]) -> "HTTPResults":
         return cls(
-            probe=HTTPResultProbe.from_api_response(data["probe"]),
+            probe=ResultProbe.from_api_response(data["probe"]),
             result=HTTPResult.from_api_response(data["result"]),
         )
 
 
 @dataclass
-class HTTPResponse:
-    id: str
-    type: str
-    status: str
-    createdAt: str
-    updatedAt: str
-    probesCount: int
+class HTTPResponse(GlobalpingBaseResponse):
     results: list[HTTPResults]
 
     @classmethod

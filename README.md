@@ -21,6 +21,19 @@ print(f"Status Code: {r.results[0].result.statusCode}")
 Response:
 > Status Code: 200
 
+## To execute an IPv4 Ping check:
+
+```
+with client() as globalping:
+    r = globalping.check_ping4(ip="72.82.42.42")
+
+for result in r.results:
+    print(f"Average ping from {result.probe.country}: {result.result.stats.avg}ms")
+```
+
+Response:
+> Average ping from AU: 237.405ms
+
 ## To get a list of all probes:
 
 ```
@@ -39,3 +52,5 @@ print(continent_counts)
 Response:
 
 > {'EU': 275, 'NA': 156, 'OC': 15, 'AS': 85, 'SA': 18, 'AF': 5}
+
+

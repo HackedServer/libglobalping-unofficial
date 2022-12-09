@@ -2,12 +2,51 @@ from dataclasses import dataclass
 from enum import Enum
 from functools import cache
 from time import sleep
-from typing import Any
+from typing import Any, Optional
 from urllib.parse import urlparse
 
 import requests
 
 DOMAIN_NAME = urlparse(url="https://api.globalping.io/")
+
+
+@dataclass
+class ResultProbe:
+    continent: str
+    region: str
+    country: str
+    state: Optional[str]
+    city: str
+    asn: int
+    longitude: float
+    latitude: float
+    network: str
+    resolvers: list[str]
+
+    @classmethod
+    def from_api_response(cls, data: dict[Any, Any]) -> "ResultProbe":
+        return cls(
+            continent=data["continent"],
+            region=data["region"],
+            country=data["country"],
+            state=data.get("state", None),
+            city=data["city"],
+            asn=data["asn"],
+            longitude=data["longitude"],
+            latitude=data["latitude"],
+            network=data["network"],
+            resolvers=data["resolvers"],
+        )
+
+
+@dataclass
+class GlobalpingBaseResponse:
+    id: str
+    type: str
+    status: str
+    createdAt: str
+    updatedAt: str
+    probesCount: int
 
 
 class Schemas:
@@ -16,7 +55,26 @@ class Schemas:
         "locations": [],
     }
 
-    def HTTP(url: str, head: bool = False) -> dict[str, Any]:
+    def PING(
+        ip: str,
+        packets: int = 3,
+        limit: Optional[int] = None,
+        locations: Optional[list] = None,
+    ) -> dict[str, Any]:
+        body = {
+            "type": "ping",
+            "target": ip,
+            "measurementOptions": {"packets": packets},
+        }
+
+        return Schemas.DEFAULT | body | loc_limit_mod(limit, locations)
+
+    def HTTP(
+        url: str,
+        head: bool = False,
+        limit: Optional[int] = None,
+        locations: Optional[list] = None,
+    ) -> dict[str, Any]:
         parsed = urlparse(url)
         port = (
             parsed.port
@@ -26,7 +84,7 @@ class Schemas:
             else 80
         )
 
-        return Schemas.DEFAULT | {
+        body = {
             "type": "http",
             "target": parsed.hostname,
             "measurementOptions": {
@@ -43,6 +101,8 @@ class Schemas:
                 },
             },
         }
+
+        return Schemas.DEFAULT | body | loc_limit_mod(limit, locations)
 
 
 class ApiPath(Enum):
@@ -115,3 +175,17 @@ def await_completion(request_id: str):
         if response["status"] == Status.FINISHED.value:
             return response
         sleep(1)
+
+
+def loc_limit_mod(
+    limit: Optional[int] = None,
+    locations: Optional[list] = None,
+) -> dict[Any, Any]:
+    body = {}
+    if limit:
+        body["limit"] = limit
+
+    if locations:
+        body["locations"] = locations
+
+    return body
