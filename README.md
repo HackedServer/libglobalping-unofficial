@@ -24,6 +24,8 @@ Response:
 ## To execute an IPv4 Ping check:
 
 ```
+from libglobalping import client
+
 with client() as globalping:
     r = globalping.check_ping4(ip="72.82.42.42")
 
