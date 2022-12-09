@@ -43,7 +43,7 @@ class GlobalpingClient:
         Returns:
             PINGResponse: Response output from GlobalPing
         """
-        body = Schemas.PING(ip=ip, packets=packets)
+        body = Schemas.PING(ip=ip, packets=packets, limit=limit)
         query_url = DOMAIN_NAME._replace(path=ApiPath.MEASUREMENTS.value).geturl()
         response = requests.post(query_url, json=body).json()
         request_id = response["id"]
