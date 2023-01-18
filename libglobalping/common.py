@@ -104,6 +104,27 @@ class Schemas:
 
         return Schemas.DEFAULT | body | loc_limit_mod(limit, locations)
 
+    def MTR(
+        target: str,
+        protocol: Optional[str] = None,
+        port: Optional[int] = None,
+        packets: Optional[int] = None,
+        limit: Optional[int] = None,
+        locations: Optional[list] = None,
+    ) -> dict[str, Any]:
+
+        body = {"type": "mtr", "target": target, "measurementOptions": {}}
+        if protocol:
+            body["measurementOptions"]["protocol"] = protocol
+
+        if packets:
+            body["measurementOptions"]["packets"] = packets
+
+        if port:
+            body["measurementOptions"]["port"] = port
+
+        return Schemas.DEFAULT | body | loc_limit_mod(limit, locations)
+
 
 class ApiPath(Enum):
     MEASUREMENTS = "/v1/measurements"
