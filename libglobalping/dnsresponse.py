@@ -11,7 +11,7 @@ class DNSAnswers:
     ttl: int
     value: str
     dnsclass: str  # API returns "class", which is reserved in Python.
-    
+
     @classmethod
     def from_api_response(cls, data: dict[str, Any]) -> "DNSAnswers":
         return cls(
@@ -40,7 +40,9 @@ class DNSResult:
         return cls(
             rawOutput=data["rawOutput"],
             resolver=data["resolver"],
-            answers=[DNSAnswers.from_api_response(answer) for answer in data["answers"]],
+            answers=[
+                DNSAnswers.from_api_response(answer) for answer in data["answers"]
+            ],
             timings=DNSTimings(total=data["timings"]["total"]),
         )
 

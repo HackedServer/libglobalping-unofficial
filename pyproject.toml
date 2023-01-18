@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "libglobalping-unofficial"
+version = "0.1.0"
+description = "Unofficial library for the GlobalPing API"
+authors = ["HackedServer"]
+readme = "README.md"
+packages = [{include = "libglobalping"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+requests = "^2.28.2"
+
+[tool.poetry.dev-dependencies]
+black = "*"
+isort = "*"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
