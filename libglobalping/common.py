@@ -76,13 +76,7 @@ class Schemas:
         locations: Optional[list] = None,
     ) -> dict[str, Any]:
         parsed = urlparse(url)
-        port = (
-            parsed.port
-            if parsed.port
-            else 443
-            if parsed.scheme.upper() == "HTTPS"
-            else 80
-        )
+        port = parsed.port if parsed.port else 443 if parsed.scheme.upper() == "HTTPS" else 80
 
         body = {
             "type": "http",
@@ -95,9 +89,7 @@ class Schemas:
                     "path": parsed.path,
                     "query": "?" + parsed.query,
                     "host": parsed.hostname,
-                    "headers": {
-                        "Referer": "https://github.com/HackedServer/libglobalping-unofficial"
-                    },
+                    "headers": {"Referer": "https://github.com/HackedServer/libglobalping-unofficial"},
                 },
             },
         }
@@ -123,6 +115,30 @@ class Schemas:
         if port:
             body["measurementOptions"]["port"] = port
 
+        return Schemas.DEFAULT | body | loc_limit_mod(limit, locations)
+
+    def DNS(
+        target: str,
+        protocol: Optional[str] = None,
+        port: Optional[int] = None,
+        resolver: Optional[str] = None,
+        query_type: str = "A",
+        limit: Optional[int] = None,
+        locations: Optional[list] = None,
+    ) -> dict[str, Any]:
+        body = {"type": "dns", "target": target, "measurementOptions": {}}
+
+        body["measurementOptions"]["query"] = {"type": query_type}
+        
+        if protocol:
+            body["measurementOptions"]["protocol"] = protocol
+            
+        if port:
+            body["measurementOptions"]["port"] = port
+        
+        if resolver:
+            body["measurementOptions"]["resolver"] = resolver
+            
         return Schemas.DEFAULT | body | loc_limit_mod(limit, locations)
 
 
@@ -169,9 +185,7 @@ class Probes:
     @classmethod
     def generate(cls) -> "Probes":
         probes: list[Probe] = []
-        probe_list = requests.get(
-            url=DOMAIN_NAME._replace(path=ApiPath.PROBES.value).geturl()
-        ).json()
+        probe_list = requests.get(url=DOMAIN_NAME._replace(path=ApiPath.PROBES.value).geturl()).json()
         for probe in probe_list:
             # Misspelling fix pending PR
             # https://github.com/jsdelivr/globalping/pull/249
@@ -179,9 +193,7 @@ class Probes:
                 Probe(
                     probe["version"],
                     probe["ready"],
-                    ProbeLocation(
-                        latitude=probe["location"].pop("latitute"), **probe["location"]
-                    ),
+                    ProbeLocation(latitude=probe["location"].pop("latitute"), **probe["location"]),
                 )
             )
         return cls(probes)

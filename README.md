@@ -70,6 +70,34 @@ api.globalping.io                                                 24.011ms  - 24
 api.globalping.io                                                 24.124ms  
 ```
 
+## To execute a DNS query check:
+
+```
+target = "globalping.io"
+query_type = "NS"
+with client() as globalping:
+    r = globalping.check_dns(target=target, query_type=query_type)
+
+for result in r.results:
+    print(
+        "Answer for {} type {} in {}ms using resolver {}:".format(
+            target, query_type, result.result.timings.total, result.result.resolver
+        )
+    )
+
+    for answer in result.result.answers:
+        print(f"Name: {answer.name}  Type: {answer.type}  TTL: {answer.ttl}  Value: {answer.value}")
+```
+
+Response:
+
+```
+Answer for globalping.io type NS in 452ms using resolver 1.1.1.1:
+Name: globalping.io.  Type: NS  TTL: 3600  Value: hydrogen.ns.hetzner.com.
+Name: globalping.io.  Type: NS  TTL: 3600  Value: oxygen.ns.hetzner.com.
+Name: globalping.io.  Type: NS  TTL: 3600  Value: helium.ns.hetzner.de.
+```
+
 ## To get a list of all probes:
 
 ```
