@@ -8,6 +8,7 @@ from .dnsresponse import DNSResponse
 from .httpresponses import HTTPResponse
 from .mtrresponses import MTRResponse
 from .pingresponses import PINGResponse
+from .traceresponses import TracerouteResponse
 
 
 class GlobalpingClient:
@@ -118,3 +119,12 @@ class GlobalpingClient:
         result = await_completion(request_id=request_id)
 
         return DNSResponse.from_api_response(result)
+
+    def check_traceroute(self, target: str) -> TracerouteResponse:
+        body = Schemas.TRACEROUTE(target=target)
+        query_url = DOMAIN_NAME._replace(path=ApiPath.MEASUREMENTS.value).geturl()
+        response = requests.post(query_url, json=body).json()
+        request_id = response["id"]
+        result = await_completion(request_id=request_id)       
+        
+        return TracerouteResponse.from_api_response(result)

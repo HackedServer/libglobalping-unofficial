@@ -98,6 +98,46 @@ Name: globalping.io.  Type: NS  TTL: 3600  Value: oxygen.ns.hetzner.com.
 Name: globalping.io.  Type: NS  TTL: 3600  Value: helium.ns.hetzner.de.
 ```
 
+## To execute a traceroute:
+
+```
+target = "api.globalping.io"
+hop_count = 0
+
+with client() as globalping:
+    r = globalping.check_traceroute(target=target)
+
+for result in r.results:
+    print(f"Traceroute to {target} from {result.probe.region}")
+    for hop in result.result.hops:
+        hostname = hop.resolvedHostname if hop.resolvedHostname else hop.resolvedAddress if hop.resolvedAddress else "UNKNOWN"
+        print(f"{str(hop_count).ljust(2)} {hostname}")
+        hop_count += 1
+```
+
+Response:
+
+```
+Traceroute to api.globalping.io from Southern Europe
+0  vrrp.gcore.lu
+1  10.255.32.225
+2  10.255.32.161
+3  hu0-1-0-3.rcr51.b050634-1.mad05.atlas.cogentco.com
+4  be3618.ccr31.mad05.atlas.cogentco.com
+5  be2324.ccr31.bio02.atlas.cogentco.com
+6  be2315.ccr41.par01.atlas.cogentco.com
+7  be2799.ccr41.fra03.atlas.cogentco.com
+8  be2959.ccr21.muc03.atlas.cogentco.com
+9  be2995.rcr21.nue01.atlas.cogentco.com
+10 be3161.nr71.b040138-0.nue01.atlas.cogentco.com
+11 149.6.158.186
+12 core24.fsn1.hetzner.com
+13 spine2.cloud2.fsn1.hetzner.com
+14 UNKNOWN
+15 static.25.98.69.159.clients.your-server.de
+16 api.globalping.io
+```
+
 ## To get a list of all probes:
 
 ```

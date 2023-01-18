@@ -129,16 +129,33 @@ class Schemas:
         body = {"type": "dns", "target": target, "measurementOptions": {}}
 
         body["measurementOptions"]["query"] = {"type": query_type}
-        
+
         if protocol:
             body["measurementOptions"]["protocol"] = protocol
-            
+
         if port:
             body["measurementOptions"]["port"] = port
-        
+
         if resolver:
             body["measurementOptions"]["resolver"] = resolver
-            
+
+        return Schemas.DEFAULT | body | loc_limit_mod(limit, locations)
+
+    def TRACEROUTE(
+        target: str,
+        protocol: Optional[str] = None,
+        port: Optional[int] = None,
+        limit: Optional[int] = None,
+        locations: Optional[list] = None,
+    ):
+        body = {"type": "traceroute", "target": target, "measurementOptions": {}}
+
+        if protocol:
+            body["measurementOptions"]["protocol"] = protocol
+
+        if port:
+            body["measurementOptions"]["port"] = port
+
         return Schemas.DEFAULT | body | loc_limit_mod(limit, locations)
 
 
