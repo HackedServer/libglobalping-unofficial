@@ -187,6 +187,12 @@ class Probe:
     version: str
     ready: bool
     location: ProbeLocation
+    tags: list[str]
+    resolvers: list[str]
+
+    @classmethod
+    def from_api_response(cls, data: dict[Any, Any]) -> "Probe":
+        return cls(location=(ProbeLocation(**data.pop("location"))), **data)
 
 
 # Is there a way to not have the `all` variable and have it be the default?
@@ -204,7 +210,7 @@ class Probes:
         probes: list[Probe] = []
         probe_list = requests.get(url=DOMAIN_NAME._replace(path=ApiPath.PROBES.value).geturl()).json()
         for probe in probe_list:
-            probes.append(Probe(**probe))
+            probes.append(Probe.from_api_response(probe))
         return cls(probes)
 
 
