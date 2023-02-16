@@ -7,6 +7,15 @@ Very much a work in progress. As is GlobalPing.
 Use at your own risk.
 
 
+## Installation
+
+This module is not availiable on PyPi yet so you will need to install from GitHub.
+
+pipenv:
+```
+pipenv install -e "git+https://github.com/HackedServer/libglobalping-unofficial#egg=libglobalping-unofficial"
+```
+
 
 ## To execute an HTTP(S) check:
 
