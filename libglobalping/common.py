@@ -76,13 +76,7 @@ class Schemas:
         locations: Optional[list] = None,
     ) -> dict[str, Any]:
         parsed = urlparse(url)
-        port = (
-            parsed.port
-            if parsed.port
-            else 443
-            if parsed.scheme.upper() == "HTTPS"
-            else 80
-        )
+        port = parsed.port if parsed.port else 443 if parsed.scheme.upper() == "HTTPS" else 80
 
         body = {
             "type": "http",
@@ -95,9 +89,7 @@ class Schemas:
                     "path": parsed.path,
                     "query": "?" + parsed.query,
                     "host": parsed.hostname,
-                    "headers": {
-                        "Referer": "https://github.com/HackedServer/libglobalping-unofficial"
-                    },
+                    "headers": {"Referer": "https://github.com/HackedServer/libglobalping-unofficial"},
                 },
             },
         }
@@ -210,21 +202,9 @@ class Probes:
     @classmethod
     def generate(cls) -> "Probes":
         probes: list[Probe] = []
-        probe_list = requests.get(
-            url=DOMAIN_NAME._replace(path=ApiPath.PROBES.value).geturl()
-        ).json()
+        probe_list = requests.get(url=DOMAIN_NAME._replace(path=ApiPath.PROBES.value).geturl()).json()
         for probe in probe_list:
-            # Misspelling fix pending PR
-            # https://github.com/jsdelivr/globalping/pull/249
-            probes.append(
-                Probe(
-                    probe["version"],
-                    probe["ready"],
-                    ProbeLocation(
-                        latitude=probe["location"].pop("latitute"), **probe["location"]
-                    ),
-                )
-            )
+            probes.append(Probe(**probe))
         return cls(probes)
 
 
