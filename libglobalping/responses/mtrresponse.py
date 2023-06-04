@@ -99,7 +99,10 @@ class MTRResults:
             else:
                 hostname = "UNKNOWN"
 
-            timings = [f"{timing.rtt}ms".ljust(10) if timing.rtt else "*".center(10) for timing in hop.timings]
+            timings = [
+                f"{timing.rtt}ms".ljust(10) if timing.rtt else "*".center(10)
+                for timing in hop.timings
+            ]
 
             line = "{}{}".format(
                 hostname[: line_length - 34 - 2].ljust(line_length - 34),
