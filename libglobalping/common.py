@@ -10,6 +10,11 @@ import requests
 DOMAIN_NAME = urlparse(url="https://api.globalping.io/")
 
 
+class ApiPath(Enum):
+    MEASUREMENTS = "/v1/measurements"
+    PROBES = "/v1/probes"
+
+
 @dataclass
 class ResultProbe:
     continent: str
@@ -159,11 +164,6 @@ class Schemas:
         return Schemas.DEFAULT | body | loc_limit_mod(limit, locations)
 
 
-class ApiPath(Enum):
-    MEASUREMENTS = "/v1/measurements"
-    PROBES = "/v1/probes"
-
-
 class Status(Enum):
     FINISHED = "finished"
     IN_PROGRESS = "in-progress"
@@ -185,7 +185,6 @@ class ProbeLocation:
 @dataclass
 class Probe:
     version: str
-    ready: bool
     location: ProbeLocation
     tags: list[str]
     resolvers: list[str]

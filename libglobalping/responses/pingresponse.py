@@ -9,12 +9,19 @@ class PINGStats:
     min: float
     max: float
     avg: float
-    loss: float
+    total: int
+    loss: int
+    rcv: int
+    drop: int
 
     @classmethod
     def from_api_response(cls, data: dict[str, float]) -> "PINGStats":
         return cls(**data)
 
+@dataclass
+class PINGTimings:
+    ttl: int
+    rtt: float
 
 @dataclass
 class PINGResult:
@@ -30,7 +37,7 @@ class PINGResult:
             rawOutput=data["rawOutput"],
             resolvedAddress=data["resolvedAddress"],
             resolvedHostname=data["resolvedHostname"],
-            timings=data["timings"],
+            timings=[PINGTimings(ttl=int(r["ttl"]), rrt=int(r["rtt"])) for r in data["timings"]],
             stats=PINGStats.from_api_response(data["stats"]),
         )
 
@@ -54,7 +61,6 @@ class PINGResponse(GlobalpingBaseResponse):
 
     @classmethod
     def from_api_response(cls, data: dict[Any, Any]) -> "PINGResponse":
-
         return cls(
             id=data["id"],
             type=data["type"],

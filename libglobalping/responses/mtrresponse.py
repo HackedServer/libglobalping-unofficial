@@ -16,10 +16,25 @@ class MTRStats:
     jMin: float
     jMax: float
     jAvg: float
+    loss: int
 
     @classmethod
     def from_api_response(cls, data: dict[str, Union[float, int]]) -> "MTRStats":
-        return cls(**data)
+        obj: MTRStats = cls(
+            min=data.pop("min"),
+            max=data.pop("max"),
+            avg=data.pop("avg"),
+            total=data.pop("total"),
+            rcv=data.pop("rcv"),
+            drop=data.pop("drop"),
+            stDev=data.pop("stDev"),
+            jMin=data.pop("jMin"),
+            jMax=data.pop("jMax"),
+            jAvg=data.pop("jAvg"),
+            loss=data.pop("loss"),
+        )
+
+        return obj
 
 
 @dataclass
@@ -41,7 +56,7 @@ class MTRHops:
         return cls(
             stats=MTRStats.from_api_response(data["stats"]),
             timings=[MTRTimings(rtt=timing["rtt"]) for timing in data["timings"]],
-            duplicate=data["duplicate"],
+            duplicate=data.get("duplicate", False),
             asn=data["asn"],
             resolvedAddress=data["resolvedHostname"],
             resolvedHostname=data["resolvedHostname"],
@@ -84,10 +99,7 @@ class MTRResults:
             else:
                 hostname = "UNKNOWN"
 
-            timings = [
-                f"{timing.rtt}ms".ljust(10) if timing.rtt else "*".center(10)
-                for timing in hop.timings
-            ]
+            timings = [f"{timing.rtt}ms".ljust(10) if timing.rtt else "*".center(10) for timing in hop.timings]
 
             line = "{}{}".format(
                 hostname[: line_length - 34 - 2].ljust(line_length - 34),

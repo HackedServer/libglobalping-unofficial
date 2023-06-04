@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Union
+from typing import Any
 
 from libglobalping.common import GlobalpingBaseResponse, ResultProbe
 
