@@ -91,7 +91,6 @@ class MTRResults:
     def pretty_print(self, line_length: int = 100, print_text: bool = True):
         output: list[str] = []
         for hop in self.result.hops:
-
             if hop.resolvedHostname:
                 hostname = hop.resolvedHostname
             elif hop.resolvedAddress:

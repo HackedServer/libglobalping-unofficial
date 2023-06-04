@@ -62,7 +62,6 @@ class HTTPResponse(GlobalpingBaseResponse):
 
     @classmethod
     def from_api_response(cls, data: dict[Any, Any]) -> "HTTPResponse":
-
         return cls(
             id=data["id"],
             type=data["type"],

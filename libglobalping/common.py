@@ -117,7 +117,6 @@ class Schemas:
         limit: Optional[int] = None,
         locations: Optional[list] = None,
     ) -> dict[str, Any]:
-
         body = {"type": "mtr", "target": target, "measurementOptions": {}}
         if protocol:
             body["measurementOptions"]["protocol"] = protocol
