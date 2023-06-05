@@ -34,16 +34,18 @@ class DNSResult:
     answers: list[DNSAnswers]
     timings: DNSTimings
     rawOutput: str
+    statusCode: int
+    statusCodeName: str
 
     @classmethod
     def from_api_response(cls, data: dict[Any, Any]) -> "DNSResult":
         return cls(
             rawOutput=data["rawOutput"],
             resolver=data["resolver"],
-            answers=[
-                DNSAnswers.from_api_response(answer) for answer in data["answers"]
-            ],
-            timings=DNSTimings(total=data["timings"]["total"]),
+            statusCode=int(data["statusCode"]),
+            statusCodeName=data["statusCodeName"],
+            answers=[DNSAnswers.from_api_response(answer) for answer in data["answers"]],
+            timings=DNSTimings(total=float(data["timings"]["total"])),
         )
 
 
