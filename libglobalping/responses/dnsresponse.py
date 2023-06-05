@@ -44,7 +44,9 @@ class DNSResult:
             resolver=data["resolver"],
             statusCode=int(data["statusCode"]),
             statusCodeName=data["statusCodeName"],
-            answers=[DNSAnswers.from_api_response(answer) for answer in data["answers"]],
+            answers=[
+                DNSAnswers.from_api_response(answer) for answer in data["answers"]
+            ],
             timings=DNSTimings(total=float(data["timings"]["total"])),
         )
 
