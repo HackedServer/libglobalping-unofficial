@@ -1,169 +1,183 @@
 # libglobalping-unofficial
-Unofficial Python library for the GlobalPing API
 
+Unofficial Python library for the [GlobalPing API](https://www.globalping.io/).
 
-Very much a work in progress. As is GlobalPing.
-
-Use at your own risk.
-
+Async-first, built on `httpx` and `pydantic`.
 
 ## Installation
 
-This module is not availiable on PyPi yet so you will need to install from GitHub.
-
-pipenv:
 ```
-pipenv install -e "git+https://github.com/HackedServer/libglobalping-unofficial#egg=libglobalping-unofficial"
+pip install git+https://github.com/HackedServer/libglobalping-unofficial.git
 ```
 
+## Quick Start
 
-## To execute an HTTP(S) check:
+```python
+import asyncio
+from libglobalping import GlobalpingClient
 
-```
-from libglobalping import client
+async def main():
+    async with GlobalpingClient() as gp:
+        result = await gp.ping("1.1.1.1")
+        print(f"Avg: {result.results[0].result.stats.avg}ms")
 
-gclient = client()
-response = gclient.check_http("https://github.com/HackedServer/libglobalping-unofficial")
-print(f"Status Code: {r.results[0].result.statusCode}")
-```
-
-Response:
-> Status Code: 200
-
-## To execute an IPv4 Ping check:
-
-```
-from libglobalping import client
-
-with client() as globalping:
-    r = globalping.check_ping4(ip="72.82.42.42")
-
-for result in r.results:
-    print(f"Average ping from {result.probe.country}: {result.result.stats.avg}ms")
+asyncio.run(main())
 ```
 
-Response:
-> Average ping from AU: 237.405ms
+## Authentication
 
-## To execute an MTR check and pretty print the results:
+Pass a token from the [Globalping Dashboard](https://dash.globalping.io/tokens) for higher rate limits:
 
-```
-from libglobalping import client
-
-target = "api.globalping.io"
-with client() as globalping:
-    r = globalping.check_mtr(target=target)
-    
-for result in r.results:
-    print(f"MTR Results to {target} from {result.probe.region}")
-    result.pretty_print(print_text=True)
+```python
+async with GlobalpingClient(token="your-token") as gp:
+    ...
 ```
 
-Response:
+## Examples
 
-```
-MTR Results to api.globalping.io from Northern Europe
-50.7.112.1                                                        1.132ms   - 1.662ms   - 0.954ms   
-be4660.ccr42.lon13.atlas.cogentco.com                             0.992ms   - 0.991ms   - 0.929ms   
-be12488.ccr42.ams03.atlas.cogentco.com                            8.147ms   - 8.317ms   - 8.08ms    
-be2814.ccr42.fra03.atlas.cogentco.com                             127.72ms  - 14.799ms  - 14.709ms  
-be2960.ccr22.muc03.atlas.cogentco.com                             20.178ms  - 20.19ms   - 20.111ms  
-be2996.rcr21.nue01.atlas.cogentco.com                             22.008ms  - 21.705ms  - 21.995ms  
-be3161.nr71.b040138-0.nue01.atlas.cogentco.com                    22.718ms  - 22.545ms  - 22.444ms  
-149.6.158.186                                                     21.843ms  - 21.826ms  - 21.825ms  
-core24.fsn1.hetzner.com                                           24.058ms  - 24.261ms  - 24.108ms  
-spine3.cloud2.fsn1.hetzner.com                                    24.736ms  - 24.659ms  - 24.774ms  
-UNKNOWN                                                               *     -     *     -     *     
-static.25.98.69.159.clients.your-server.de                        24.15ms   - 24.139ms  - 24.193ms  
-api.globalping.io                                                 24.011ms  - 24.054ms  - 24.22ms   
-api.globalping.io                                                 24.124ms  
+### Ping
+
+```python
+async with GlobalpingClient() as gp:
+    r = await gp.ping("1.1.1.1", packets=5, limit=3)
+    for item in r.results:
+        print(f"Avg from {item.probe.country}: {item.result.stats.avg}ms")
 ```
 
-## To execute a DNS query check:
+### HTTP
 
+```python
+async with GlobalpingClient() as gp:
+    r = await gp.http("https://example.com/path")
+    print(f"Status: {r.results[0].result.status_code}")
+    print(f"TLS: {r.results[0].result.tls}")
 ```
-target = "globalping.io"
-query_type = "NS"
-with client() as globalping:
-    r = globalping.check_dns(target=target, query_type=query_type)
 
-for result in r.results:
-    print(
-        "Answer for {} type {} in {}ms using resolver {}:".format(
-            target, query_type, result.result.timings.total, result.result.resolver
-        )
+### DNS
+
+```python
+async with GlobalpingClient() as gp:
+    r = await gp.dns("globalping.io", query_type="NS")
+    for item in r.results:
+        for answer in item.result.answers:
+            print(f"{answer.name} -> {answer.value}")
+```
+
+### DNS with trace
+
+```python
+async with GlobalpingClient() as gp:
+    r = await gp.dns("example.com", trace=True)
+    for item in r.results:
+        for hop in item.result.hops:
+            print(f"Resolver: {hop.resolver}, answers: {len(hop.answers)}")
+```
+
+### MTR
+
+```python
+async with GlobalpingClient() as gp:
+    r = await gp.mtr("api.globalping.io", limit=2)
+    for item in r.results:
+        print(f"MTR from {item.probe.city}")
+        item.pretty_print()
+```
+
+### Traceroute
+
+```python
+async with GlobalpingClient() as gp:
+    r = await gp.traceroute("api.globalping.io")
+    for item in r.results:
+        for hop in item.result.hops:
+            print(hop.resolved_hostname or hop.resolved_address or "*")
+```
+
+### Location filtering
+
+Use `MeasurementLocation` or plain dicts to target specific probes:
+
+```python
+from libglobalping import GlobalpingClient
+from libglobalping.models import MeasurementLocation
+
+async with GlobalpingClient() as gp:
+    r = await gp.ping(
+        "1.1.1.1",
+        locations=[
+            MeasurementLocation(country="DE"),
+            MeasurementLocation(country="US", state="CA"),
+            MeasurementLocation(magic="AWS+Europe"),
+        ],
     )
-
-    for answer in result.result.answers:
-        print(f"Name: {answer.name}  Type: {answer.type}  TTL: {answer.ttl}  Value: {answer.value}")
 ```
 
-Response:
+Or use a previous measurement ID to reuse the same probes:
 
-```
-Answer for globalping.io type NS in 452ms using resolver 1.1.1.1:
-Name: globalping.io.  Type: NS  TTL: 3600  Value: hydrogen.ns.hetzner.com.
-Name: globalping.io.  Type: NS  TTL: 3600  Value: oxygen.ns.hetzner.com.
-Name: globalping.io.  Type: NS  TTL: 3600  Value: helium.ns.hetzner.de.
+```python
+r2 = await gp.traceroute("1.1.1.1", locations=r.id)
 ```
 
-## To execute a traceroute:
+### Probes
 
-```
-target = "api.globalping.io"
-hop_count = 0
-
-with client() as globalping:
-    r = globalping.check_traceroute(target=target)
-
-for result in r.results:
-    print(f"Traceroute to {target} from {result.probe.region}")
-    for hop in result.result.hops:
-        hostname = hop.resolvedHostname if hop.resolvedHostname else hop.resolvedAddress if hop.resolvedAddress else "UNKNOWN"
-        print(f"{str(hop_count).ljust(2)} {hostname}")
-        hop_count += 1
+```python
+async with GlobalpingClient() as gp:
+    probes = await gp.get_probes()
+    by_continent = {}
+    for p in probes:
+        c = p.location.continent
+        by_continent[c] = by_continent.get(c, 0) + 1
+    print(by_continent)
 ```
 
-Response:
+### Rate limits
 
-```
-Traceroute to api.globalping.io from Southern Europe
-0  vrrp.gcore.lu
-1  10.255.32.225
-2  10.255.32.161
-3  hu0-1-0-3.rcr51.b050634-1.mad05.atlas.cogentco.com
-4  be3618.ccr31.mad05.atlas.cogentco.com
-5  be2324.ccr31.bio02.atlas.cogentco.com
-6  be2315.ccr41.par01.atlas.cogentco.com
-7  be2799.ccr41.fra03.atlas.cogentco.com
-8  be2959.ccr21.muc03.atlas.cogentco.com
-9  be2995.rcr21.nue01.atlas.cogentco.com
-10 be3161.nr71.b040138-0.nue01.atlas.cogentco.com
-11 149.6.158.186
-12 core24.fsn1.hetzner.com
-13 spine2.cloud2.fsn1.hetzner.com
-14 UNKNOWN
-15 static.25.98.69.159.clients.your-server.de
-16 api.globalping.io
+```python
+async with GlobalpingClient(token="your-token") as gp:
+    limits = await gp.get_limits()
+    print(f"Remaining: {limits.rate_limit.measurements.create.remaining}")
+    if limits.credits:
+        print(f"Credits: {limits.credits.remaining}")
 ```
 
-## To get a list of all probes:
+## Error Handling
 
+```python
+from libglobalping.exceptions import (
+    RateLimitExceededError,
+    NoProbesFoundError,
+    ValidationError,
+    MeasurementTimeoutError,
+)
+
+try:
+    r = await gp.ping("1.1.1.1")
+except RateLimitExceededError as e:
+    print(f"Rate limited. Resets in {e.reset}s")
+except NoProbesFoundError:
+    print("No probes available for that location")
+except ValidationError as e:
+    print(f"Bad request: {e}")
+except MeasurementTimeoutError as e:
+    print(f"Measurement {e.measurement_id} timed out")
 ```
-from libglobalping import client
 
-gclient = client()
-continent_counts = {}
-for probe in gclient.get_all_probes():
-    continent = probe.location.continent
-    continent_counts[continent] = continent_counts.get(continent, 0) + 1
+## API Coverage
 
-print(continent_counts)
-
-```
-
-Response:
-
-> {'EU': 275, 'NA': 156, 'OC': 15, 'AS': 85, 'SA': 18, 'AF': 5}
-
-
+| Feature | Supported |
+|---------|-----------|
+| Ping (ICMP/TCP) | ✅ |
+| Traceroute (ICMP/TCP/UDP) | ✅ |
+| MTR (ICMP/TCP/UDP) | ✅ |
+| DNS (A, AAAA, NS, MX, etc.) | ✅ |
+| DNS trace mode | ✅ |
+| HTTP (HEAD/GET/OPTIONS) | ✅ |
+| Location filtering | ✅ |
+| Magic location strings | ✅ |
+| Probe reuse via measurement ID | ✅ |
+| Authentication (Bearer token) | ✅ |
+| Rate limit checking | ✅ |
+| IPv6 (experimental) | ✅ |
+| In-progress updates | ✅ |
+| Typed error handling | ✅ |
+| List online probes | ✅ |
