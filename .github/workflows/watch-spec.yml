@@ -1,0 +1,60 @@
+name: Watch upstream API spec
+
+on:
+  schedule:
+    - cron: '0 9 * * 1'  # Every Monday at 9am UTC
+  workflow_dispatch:
+
+jobs:
+  check-spec:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Restore previous spec from cache
+        id: cache
+        uses: actions/cache/restore@v4
+        with:
+          path: spec-previous.yaml
+          key: globalping-spec-${{ github.run_id }}
+          restore-keys: globalping-spec-
+
+      - name: Fetch upstream spec
+        run: curl -s https://api.globalping.io/v1/spec.yaml -o spec-latest.yaml
+
+      - name: Compare specs
+        id: diff
+        run: |
+          if [ ! -f spec-previous.yaml ]; then
+            echo "No previous spec cached. Saving baseline."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          elif ! diff -q spec-previous.yaml spec-latest.yaml > /dev/null 2>&1; then
+            echo "Spec has changed."
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            diff spec-previous.yaml spec-latest.yaml > spec-diff.txt || true
+          else
+            echo "No changes."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Save current spec to cache
+        uses: actions/cache/save@v4
+        with:
+          path: spec-latest.yaml
+          key: globalping-spec-${{ github.run_id }}
+
+      - name: Open issue for Kiro Agent
+        if: steps.diff.outputs.changed == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const diff = fs.readFileSync('spec-diff.txt', 'utf8').slice(0, 3000);
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: 'Upstream GlobalPing API spec has changed',
+              labels: ['kiro'],
+              body: `The upstream API spec at https://api.globalping.io/v1/spec.yaml has changed.\n\nPlease review the diff below and update the library (models, client methods, tests) to match any new or modified endpoints, parameters, or response shapes.\n\n<details><summary>Spec diff (truncated)</summary>\n\n\`\`\`diff\n${diff}\n\`\`\`\n\n</details>\n\nFull spec: https://api.globalping.io/v1/spec.yaml`
+            });
